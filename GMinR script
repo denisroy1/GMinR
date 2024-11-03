@@ -1,0 +1,631 @@
+# GMinR.R
+# This is a script to run geometric morphometrics in R. It loads a '.TPS' 
+# file and reads it into the R instance using the geomoprh 'readland.tps' cmd.
+# The data come across scaled (based on our measurements), and each individuals
+# landmark configuration is loaded. Individuals are identified from their ID
+# entry we fixed during landmarking. Script also reads another file containing metadata,
+# which are the environmental variables collected during the field collections.
+
+# Written by DR Oct 2024.
+
+################################## PRELIMINARIES ####################################
+# We begin by clearing out our instances (everything that R remembers 
+# from the last run)
+
+# This cmd clears and resets the R instance and removes all data and 
+# previously loaded variables.
+rm(list = ls())
+
+# The following code should only be run once IF, you haven't already installed 
+# the packages. If you have, comment it out like I have done here.
+#install.packages("geomorph", "ggplot2", "ggfortify", "ellipse", "car", "dplyr",
+#                 "vegan", "lessR", "emmeans")
+
+# Next we load the libraries. These are the list of cmds that are specific 
+# to a set of analyses. In this case we have a few libraries to load 
+# We can load them all at once using curly brackets.
+
+{
+  library(geomorph, warn.conflicts = F, quietly = T)
+  library(ggplot2, warn.conflicts = F, quietly = T)
+  library(ggfortify, warn.conflicts = F, quietly = T)
+  library(ellipse, warn.conflicts = F, quietly = T)
+  library(car, warn.conflicts = F, quietly = T)
+  library(dplyr, warn.conflicts = F, quietly = T)
+  library(vegan, warn.conflicts = F, quietly = T)
+  library(lessR, warn.conflicts = F, quietly = T)
+  library(emmeans, warn.conflicts = F, quietly = T)
+}
+
+# Next we want to set the set the working directory to where the data files are located
+setwd("path/to/your/data")
+
+# Load the TPS file produced during landmarking
+rawdat <- readland.tps("FISH2024L.TPS", specID = "ID", readcurves = F, 
+                       negNA = FALSE, warnmsg = T)
+
+# Import the covariate file, containing METADATA 
+covar <- read.csv("F2024-METADATA.csv", header = T, na.strings = "NA", 
+                  stringsAsFactors = T)
+
+# Extract names of the fish we landmarked and store in a vector
+idsall <- dimnames(rawdat)[[3]]
+idsall
+
+# Extract and assign site factor to each sample using the IDs
+site <- as.factor(substr(idsall,1,7))
+site
+
+# Extract and assign species from the IDs in the sam way
+species <- as.factor(substr(idsall,11,13))
+species
+
+mycols <- c("darkorange4", "black", "skyblue2","darkgoldenrod2",
+            "bisque2", "aquamarine", "springgreen4", "darkorange", 
+            "darkgreen", "salmon", "chartreuse", "darkslategray4", 
+            "darkorchid", "yellow2") 
+
+############################# Look at the Data ###############################
+# Look at the data you generated in different ways. For example we 
+# can plot the number of individuals by gear (categorical data). We 
+# do this using base R
+
+par(mar=c(5,5,1,1))
+barplot(sort(table(covar$gear), decreasing = T),
+        ylab = "Frequency", cex.lab = 2,
+        cex.names = 2, col = "firebrick4", 
+        ylim = c(0,50), las = 1,  cex.axis = 1.5) 
+
+# Can also do this using ggplot2 which give you more control over the 
+# plotting features.
+
+# resetting the margins of the plotting area
+par(mar = c(5, 4, 4, 2) + 0.1)
+
+# Here we need to sort the data by gear type first to make the patterns easier 
+# to identify 
+covar$gear <- factor(covar$gear, 
+                      levels = names(sort(table(covar$gear), decreasing = TRUE)))
+
+# Then we use ggplot (grammar of graphics) to plot the data.
+ggplot(covar, aes(x=gear)) + 
+  geom_bar(stat="count", fill = "firebrick4") +
+  labs(x = "Gear", y = "# of individuals") +
+  theme_classic() +
+  theme(axis.text.x = element_text(size = 22),
+      axis.title.x = element_text(size = 22),
+      axis.title.y = element_text(size = 22),
+      axis.text.y = element_text(size = 22),
+      axis.title = element_text(face = "bold"),
+      axis.line = element_line(linewidth=1.3),
+      axis.ticks = element_line(linewidth = 1.3),
+      axis.ticks.length = unit(.3,"cm"))
+
+# To plot out the continuous data (measured data) we can do 
+# something similar but use histogram vs barchart
+ggplot(covar, aes(x = log(lenmm))) + 
+  geom_histogram(fill = "skyblue3", col = "black", 
+                 binwidth = .1, boundary = 0) + 
+  labs(x = "log (length in mm)", y = "Frequency") + 
+  scale_y_continuous(limits = c(0, 15), breaks = seq(0, 15, by = 5)) +
+  theme_classic() + 
+  theme(axis.text.x = element_text(size = 22),
+        axis.title.x = element_text(size = 22),
+        axis.title.y = element_text(size = 22),
+        axis.text.y = element_text(size = 22),
+        axis.title = element_text(face = "bold"),
+        axis.line = element_line(linewidth=1.3),
+        axis.ticks = element_line(linewidth = 1.3),
+        axis.ticks.length = unit(.3,"cm"))
+
+# Can also try to plot continuous variables by others to see if 
+# a relationship might exit (e.g., size vs. temperature)
+sz_temp <- lm(log(lenmm) ~ temp, data = covar)
+
+# Once we generate a relationship, we can look at the summary 
+# of the results. 
+summary(sz_temp)
+
+# But, because our data are very skewed and likely odd (uneven sample
+# size among others), you would need to account for this skew and test 
+# for significance using anova. Here we just skip to anova.
+anova(sz_temp)
+
+# can plot this relationship using ggplot again. Here you can see that a lm 
+# was not likely adequate as a test. 
+ggplot(covar, aes(x = log(lenmm), y = temp)) + 
+  geom_point(size = 4, colour = "springgreen4", alpha = 0.7, stroke = 1) + 
+  labs(x = "log (length in mm)", y = "Temperature in C") + 
+  theme_classic() + 
+  theme(axis.text.x = element_text(size = 22),
+        axis.title.x = element_text(size = 22),
+        axis.title.y = element_text(size = 22),
+        axis.text.y = element_text(size = 22),
+        axis.title = element_text(face = "bold"),
+        axis.line = element_line(linewidth=1.3),
+        axis.ticks = element_line(linewidth = 1.3),
+        axis.ticks.length = unit(.3,"cm"))
+
+# can also try using size vs. gear. But here gear is not a continuous variable
+# and so we end up testing by categories. 
+sz_gear <- lm(log(lenmm) ~ gear, data = covar)
+
+# Get the summary
+summary(sz_gear)
+
+# It's important to note here that the intercept here is the first category.
+# in this case FN. This is how R calculate the coefficients. To derive  
+# coefficients for all other categories, take the intercept and add the
+# value under "Estimate" to it. e.g., to estimate coefficient of gearSN
+# you would take the intercept 4.62759 and add -0.03257 = 4.59502
+
+# To evaluate the hypothesis of size preference in gear use anova 
+anova(sz_gear)
+
+# Can summarise the data using emmeans which tabulates the coefficients
+# and the confidence we have in each.
+gearsiz <- as.data.frame(emmeans(sz_gear, "gear",type = "log"))
+
+# Then plot out the results using a jitter plot to show how 
+# the groups vary.
+ggplot(covar, aes(x = gear, y = log(lenmm), colour = gear, shape = gear)) + 
+  geom_jitter(size = 4, alpha = 0.7, stroke = 1) + 
+  labs(x = "Gear type", y = "log (length in mm)") + 
+  stat_summary(fun.data = "mean_cl_normal", colour = "black", 
+               alpha = 0.7, stroke = 1, size = 1.5, linewidth = 1.2, show.legend = F) +
+  theme_classic() + 
+  theme(axis.text.x = element_text(size = 22),
+        axis.title.x = element_text(size = 22),
+        axis.title.y = element_text(size = 22),
+        axis.text.y = element_text(size = 22),
+        axis.title = element_text(face = "bold"),
+        axis.line = element_line(linewidth=1.3),
+        axis.ticks = element_line(linewidth = 1.3),
+        axis.ticks.length = unit(.3,"cm")) + 
+  theme(legend.text = element_text(size = 17))+
+  theme(legend.title = element_blank())
+
+# Here, the points are plotted and the mean and 95%CI from the mean of 
+# each group is also plotted (in black).
+
+######################### Perform the Procrustes analyses ########################
+# Perform Generalised Procrustes superimposition (GPS) of the data
+# This also generates the consensus configuration (CC)
+dat_17_GPA <- gpagen(rawdat, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
+                     max.iter = 9999, ProcD = TRUE, Proj = TRUE, approxBE = T,
+                     print.progress = TRUE, verbose = T)
+
+# Extract the consensus configuration (CC)
+ref <- dat_17_GPA$consensus
+
+# Use the below to define the links yourself.
+# Define landmark links based on the consensus configuration
+# outshape <- define.links(ref, ptsize = 2)
+
+# Below is a matrix that can be used to connect the links in the CC automatically 
+# (it will use a matrix to help define the landmarks that should be connected). 
+outshape <- matrix(c(1,4,4,17,16,17,15,16,14,15,13,14,12,
+                     13,11,12,8,11,2,8,1,2,3,5,6,7,9,10), 14,2, byrow = T)
+
+# Set plotting parameters to visualize the consensus configuration (CC)
+plot_params <- list(mean.bg = "dodgerblue3",
+                    mean.cex = 2,
+                    pt.bg = "darkgray", 
+                    pt.cex = .3,
+                    link.col = "dodgerblue3",
+                    txt.cex = 1.5,
+                    txt.col = "springgreen3",
+                    txt.pos = 3.5)
+
+# Plot all specimen landmarks with respect to the consensus configuration
+plotAllSpecimens(dat_17_GPA$coords, mean = T, links = outshape, label = T,
+                 plot_param = plot_params)
+
+# Create a dataframe with geometric morphometric data and metadata
+gdf <- geomorph.data.frame(dat_17_GPA,
+                          id = idsall,
+                          species = species,
+                          site = site,
+                          length = covar$lenmm,
+                          weight = covar$weightg,
+                          gear = covar$gear,
+                          tempinC = covar$temp,
+                          do = covar$DO,
+                          ph = covar$pH,
+                          cond = covar$cond,
+                          turb = covar$turb)
+
+# Plot outliers in the data to see deviations in Procrustes distances
+outfish <- plotOutliers(gdf$coords)
+On <- 1 # set to number of outliers to plot
+
+# Extract and visualize the "On" largest outliers (depends on the figure)
+outfish <- as.vector(outfish[1:On])
+
+# Loop to plot the major outliers against the consensus configuration
+for (i in 1:length(outfish)) {
+  maj_out <- mshape(gdf$coords[,,outfish[i]])
+  
+  # Plot the reference to target deformation grid
+  plotRefToTarget(ref, maj_out, method = "points", mag = 1, links = outshape,
+                  gridPars = gridPar(tar.pt.bg = "darkorange", tar.pt.size = 2,
+                                     tar.link.col = "darkorange", tar.link.lwd = 2))
+  
+  # Add a title to the plot
+  title(main = paste("Deformation plot for fish ID:", idsall[outfish[i]]), cex.main = 2)
+}
+
+####################### ALLOMETRY CHECK AND CORRECTION #####################
+# Need to check the data to see if there is an allometric relationship that 
+# should be accounted for. 
+
+# What is allometry? Think about this for a bit.
+
+# To do this we follow the details outlined in Adams et al. 2021, in the
+# vignette associated with allometric analyses. Performing size correction 
+# of shape data using the procD.lm cmd.
+
+# This will create an object we can then use to test for a significant 
+# relationships between shape and size.
+sc_gdf <- procD.lm(coords ~ log(length), iter=9999, data=gdf)
+sc_gdf
+
+plot(sc_gdf, type = c("diagnostics", "regression", "PC"), 
+     outliers = F,
+     predictor = NULL,
+     reg.type = c("PredLine"))
+
+# As in traditional stats in R (especially with uneven sample sizes),
+# use summary to get the coefficients, and,...
+summary(sc_gdf)
+
+# Test the allometric relationship with anova.
+anova(sc_gdf)
+
+# It would be important to check whether the allometric relationship 
+# is different for the different species and/or fishing gear or even
+# site. For this we plot the allometric relationship looking for 
+# large deviations in the slopes among groups. We'll try by species:
+# plotAllometry(sc_gdf, size = gdf$Csize, logsz = TRUE, method = "PredLine",
+#              pch = 19, col = as.numeric(gdf$species), cex.axis = 1.5,
+#              cex.lab = 1.3)
+
+# Here, there is no significant relationship between size and shape in this 
+# dataset. So, we can now proceed to PCA or parsing out by most important 
+# shape differences. If there was a relationship we would have to account for it.
+
+################## PRINCIPAL COMPONENTS ANALYSES  #####################
+################## WITHOUT SIZE CORRECTION  #####################
+# Perform a Principal components analysis on shape
+# variables, using default parameters for gm.
+gmpc <- gm.prcomp(gdf$coords, phy=NULL, align.to.phy=NULL, GLS=F,
+                  transform=FALSE)
+
+# Summarise the pca results to see variance explained by new axes 
+sumgmpc <- summary(gmpc)
+
+# Set a variable pv to extract the percent variance for each principal 
+# component
+pv <- as.numeric(sumgmpc$PC.summary[2,])
+
+# Extract the new x and y coordinates of each fish along the new PC axes
+# 1, 2 and 3, and put these into a new data frame.
+gmpc_1 <- as.data.frame(gmpc$x[,1:3])
+
+# Also add the species, site designations to each individual fish along 
+# with its log(length).
+# Can also add any other data feature we collected at this point too.
+gmpc_1$species <- gdf$species
+gmpc_1$site <- gdf$site
+gmpc_1$loglen <- log(gdf$length)
+# gmpc_1$Temp <- gdf$tempinC 
+# etc,...
+
+# Generate a barplot, (screeplot) demonstrating the % variance explained 
+# by shape PCs.
+pcs <- as.factor(to("PC", 11))
+pcdf <- cbind.data.frame(PCs=pcs, pervar=pv[1:11]*100)
+
+# This will set the values to display in our overall species PCA plots
+pc1_label <- paste0("PC1 (", round(pcdf$pervar[1],1), "%)")
+pc2_label <- paste0("PC2 (", round(pcdf$pervar[2],1), "%)")
+
+# Set a plot that looks at the percent variance explained by our new 
+# most important axes of shape (i.e., PCs)
+ggplot(pcdf)+
+  geom_col(aes(y=pervar, x=PCs), fill = "firebrick4") + 
+  labs(x = "PCs", y = "% variance explained")+
+  theme(aspect.ratio = 0.8)+
+  scale_y_continuous(limits = c(0, 60), breaks = seq(0, 60, by = 10)) +
+  theme_classic() +
+  theme(axis.title.x = element_text(size = 22),
+        axis.text.x = element_text(size = 18, angle = 90, hjust = 1, vjust = 0.5),
+        axis.title.y = element_text(size = 22),
+        axis.text.y = element_text(size = 18),
+        axis.line = element_line(linewidth=1.3),
+        axis.ticks = element_line(linewidth = 1.1),
+        axis.ticks.length = unit(.2,"cm"))
+
+# Plot the transposed data (on new shape axes) with the 95% ellipses 
+# (for those with enough data) with ggplot2. This will use the "mycols"
+# assigned above and the "pc1_label" and "pc2_label" from above.
+ggplot(gmpc_1, aes(x = Comp1, y = Comp2, colour=species)) + 
+  geom_point(size = 5, stroke = 1, alpha = 0.7) + 
+  stat_ellipse(aes(fill = species), geom = "polygon", color = NA, alpha = 0.2, level = 0.95) +
+  stat_ellipse(aes(color = species), geom = "path", linewidth = 1, level = 0.95) +
+  scale_fill_manual(values = mycols) +
+  labs(x = pc1_label, y = pc2_label) + 
+  scale_color_manual(values = mycols) +
+  geom_hline(yintercept = 0, linewidth = 1, color="firebrick4", linetype="dashed") +
+  geom_vline(xintercept = 0, linewidth = 1, color="firebrick4", linetype="dashed") +
+  theme(aspect.ratio = 0.70) +
+  theme_classic() +
+  scale_x_continuous(limits = c(-0.2, 0.2), breaks = seq(-0.5, 0.5, by = 0.05)) +
+  scale_y_continuous(limits = c(-0.3, 0.2), breaks = seq(-0.5, 0.5, by = 0.1)) +
+  theme(axis.text.x = element_text(size = 22, angle = 90, hjust = 1, vjust = 0.5),
+        axis.title.x = element_text(size = 22),
+        axis.title.y = element_text(size = 22),
+        axis.text.y = element_text(size = 22),
+        axis.title = element_text(face = "bold"),
+        axis.line = element_line(linewidth=1.3),
+        axis.ticks = element_line(linewidth = 1.3),
+        axis.ticks.length = unit(.3,"cm")) +
+  theme(legend.text = element_text(size = 17))+
+  theme(legend.title = element_blank())
+
+# Plotting min and max deformations along PC1 and PC2
+# First PC1 MIN
+plotRefToTarget(ref, gmpc$shapes$shapes.comp1$min, method = "points", mag = 1, links = outshape,
+                gridPars = gridPar(tar.pt.bg = "cyan1", tar.pt.size = 2,
+                                   tar.link.col = "cyan1", tar.link.lwd = 2))
+
+title(main = paste("CC deformation along PC1 - MIN"), cex.main = 2)
+
+# Second PC1 MAX
+plotRefToTarget(ref, gmpc$shapes$shapes.comp1$max, method = "points", mag = 1, links = outshape,
+                gridPars = gridPar(tar.pt.bg = "darkblue", tar.pt.size = 2,
+                                   tar.link.col = "darkblue", tar.link.lwd = 2))
+
+title(main = paste("CC deformation along PC1 - MAX"), cex.main = 2)
+
+# Then PC2 MIN
+plotRefToTarget(ref, gmpc$shapes$shapes.comp2$min, method = "points", mag = 1, links = outshape,
+                gridPars = gridPar(tar.pt.bg = "chartreuse", tar.pt.size = 2,
+                                   tar.link.col = "chartreuse", tar.link.lwd = 2))
+
+title(main = paste("CC deformation along PC2 - MIN"), cex.main = 2)
+
+# Finally PC2 MAX
+plotRefToTarget(ref, gmpc$shapes$shapes.comp2$max, method = "points", mag = 1, links = outshape,
+                gridPars = gridPar(tar.pt.bg = "darkgreen", tar.pt.size = 2,
+                                   tar.link.col = "darkgreen", tar.link.lwd = 2))
+
+title(main = paste("CC deformation along PC2 - MAX"), cex.main = 2)
+
+# Determining the importance of given landmarks in differentiating species along
+# PC1 and PC2
+barplot(gmpc$rotation[,1], col = "firebrick4", 
+        main = "Landmark loading on PC1", cex.main = 2, cex.axis = 1.3,
+        cex.names = 1, ylab = "Loadings", cex.lab = 2, las = 2)
+
+barplot(gmpc$rotation[,2], col = "firebrick4", 
+        main = "Landmark loading on PC2", cex.main = 2, cex.axis = 1.3,
+        cex.names = 1, ylab = "Loadings", cex.lab = 2, las = 2)
+
+################################### CENTRARCHIDS ####################################
+# An example that uses just two species and how these can be isolated in R
+# this example also helps to show how to size correct the data for the analyses 
+# if this is something that might be needed. 
+
+# This will isolate just the sunfish (PKS and RKB) from the overall 
+# data
+ct_dat <- rawdat[,, which(species=='PKS'|species =="RKB")]
+ct_md <- covar[which(covar$species=="PKS"|covar$species =="RKB"),]
+
+# Similar to the overall data, we get the individual ids from the TPS file
+ct_indx <- dimnames(ct_dat)[[3]]
+ct_indx
+
+# Can extract site and species in the same way as above.
+ct_site<-as.factor(substr(ct_indx,1,7))
+ct_site
+
+ct_species<-as.factor(substr(ct_indx,11,13))
+ct_species
+
+# Perform Generalised Procrustes superimposition (GPS) of the data
+# This also generates the consensus configuration (CC)
+ct_GPA <- gpagen(ct_dat, curves = NULL, surfaces = NULL, PrinAxes = TRUE,
+                     max.iter = 9999, ProcD = TRUE, Proj = TRUE, approxBE = T,
+                     print.progress = TRUE, verbose = T)
+
+# Setting the colours we will want to use later in our plots.
+ct_cols <- c("darkorange", "darkgreen") 
+
+# Extract the consensus configuration (CC)
+ct_ref <- ct_GPA$consensus
+
+# Define landmark links based on the consensus configuration
+ct_shape <- outshape #Again here referring to the "outshape" matrix defined above.
+
+# Plot all specimen landmarks with respect to the consensus configuration
+plotAllSpecimens(ct_GPA$coords, mean = T, links = outshape, label = T,
+                 plot_param = plot_params)
+
+# Create a dataframe with centrarchid geometric morphometric data and metadata
+ct_df <- geomorph.data.frame(ct_GPA,
+                           id = ct_indx,
+                           species = ct_species,
+                           site = ct_site,
+                           length = ct_md$lenmm,
+                           weight = ct_md$weightg,
+                           gear = ct_md$gear,
+                           tempinC = ct_md$temp,
+                           do = ct_md$DO,
+                           ph = ct_md$pH,
+                           cond = ct_md$cond,
+                           turb = ct_md$turb)
+
+# Plot outliers in the data to see deviations in Procrustes distances
+ct_out <- plotOutliers(ct_df$coords)
+
+# Extract and visualize the XX largest outliers (depends on the figure)
+ct_out <- as.vector(ct_out[1:1])
+
+# Loop to plot the major outliers against the consensus configuration
+for (i in 1:length(ct_out)) {
+  maj_out <- mshape(ct_df$coords[,,ct_out[i]])
+  
+  # Plot the reference to target deformation grid
+  plotRefToTarget(ref, maj_out, method = "points", mag = 1, links = ct_shape,
+                  gridPars = gridPar(tar.pt.bg = "darkorange", tar.pt.size = 2,
+                                     tar.link.col = "darkorange", tar.link.lwd = 2))
+  
+  # Add a title to the plot
+  title(main = paste("Deformation plot for fish ID:", ct_indx[ct_out[i]]), cex.main = 2)
+}
+
+# Again, checking for allometry
+ctal <- procD.lm(coords ~ log(length), iter=9999, data=ct_df)
+ctal
+
+# Summarise the allometry check to see if there are significant 
+# difference
+summary(ctal)
+
+# Test the hypothesis with an anova.
+anova(ctal)
+
+# Here although the relationship is not significant, it is relatively close
+# ie., 0.06. So could use this to assume size is important and related to shape.
+
+# Can plot the allometric relationship to see if it would be safer to size correct 
+# using the plotAllometry cmd as part of geomorph.  
+plotAllometry(ctal, size = ct_df$length, logsz = T, method = "PredLine",
+                  pch = 19, col = as.numeric(ct_df$species))
+
+# Here the figure shows that there likely is some allometry in the data and to 
+# be safe, we could "size correct" the data for further analyses.
+# Here we use the residuals of the size corrected variables 'ctal$residuals'
+# which are the size variables corrected for size differences.
+sc_ctpc <- gm.prcomp(ctal$residuals, phy=NULL, align.to.phy=NULL, GLS=F,
+                   transform=FALSE)
+
+# Summarise the PCA to get the amount of variance attributed to each 
+# PC from their Eigenvalues (Proportion of variance).
+sum_sc_ctpc <- summary(sc_ctpc)
+sc_ct_pv <- as.numeric(sum_sc_ctpc$PC.summary[2,])
+
+# Generate a barplot, (screeplot) demonstrating the % variance explained 
+# by most size corrected shape PCs.
+ct_pcs <- as.factor(to("PC", 11))
+ct_pcdf <- cbind.data.frame(PCs=ct_pcs, pervar=sc_ct_pv[1:11]*100)
+
+# setting the percent variance explained by PC1 and PC2
+ct_pc1lab <- paste0("PC1 (", round(ct_pcdf$pervar[1],1), "%)")
+ct_pc2lab <- paste0("PC2 (", round(ct_pcdf$pervar[2],1), "%)")
+
+# Plotting the variance explained in the different PCs.
+ggplot(ct_pcdf)+
+  geom_col(aes(y=pervar, x=PCs), fill = "firebrick4") + 
+  labs(x = "PCs", y = "% variance explained")+
+  theme(aspect.ratio = 0.8)+
+  scale_y_continuous(limits = c(0, 35), breaks = seq(0, 35, by = 5)) +
+  theme_classic() +
+  theme(axis.title.x = element_text(size = 22),
+        axis.text.x = element_text(size = 18, angle = 90, hjust = 1, vjust = 0.5),
+        axis.title.y = element_text(size = 22),
+        axis.text.y = element_text(size = 18),
+        axis.line = element_line(linewidth=1.3),
+        axis.ticks = element_line(linewidth = 1.1),
+        axis.ticks.length = unit(.2,"cm"))
+
+# Construct a dataframe of the pc scores and add the major habitat 
+# and age classes for each individual. Also going to attach log length 
+# in mm.
+ct_gmpc <- as.data.frame(sc_ctpc$x[,1:3])
+ct_gmpc$species <- ct_species
+ct_gmpc$site <- ct_site
+ct_gmpc$loglen <- log(ct_df$length)
+ct_gmpc$DO <- ct_df$do
+ct_gmpc$temp <- ct_df$tempinC
+ct_gmpc$gear <- ct_df$gear
+
+# Plotting the GM PCA data along PC1 and PC2 and using age as a factor by which 
+# to colour the data using ggplot2.
+
+# plot the data with the 95% ellipses with ggplot2
+ggplot(ct_gmpc, aes(x = Comp1, y = Comp2, colour=species)) + 
+  geom_point(size = 5, stroke = 1, alpha = 0.7) + 
+  stat_ellipse(aes(fill = species), geom = "polygon", color = NA, alpha = 0.2, level = 0.95) +
+  stat_ellipse(aes(color = species), geom = "path", linewidth = 1, level = 0.95) +
+  scale_fill_manual(values = ct_cols) +
+  labs(x = ct_pc1lab, y = ct_pc2lab) + 
+  scale_color_manual(values = ct_cols) +
+  geom_hline(yintercept = 0, linewidth = 1, color="firebrick4", linetype="dashed") +
+  geom_vline(xintercept = 0, linewidth = 1, color="firebrick4", linetype="dashed") +
+  theme(aspect.ratio = 0.70) +
+  theme_classic() +
+  scale_x_continuous(limits = c(-0.1, 0.1), breaks = seq(-0.1, 0.1, by = 0.05)) +
+  scale_y_continuous(limits = c(-0.1, 0.1), breaks = seq(-0.1, 0.1, by = 0.05)) +
+  theme(axis.text.x = element_text(size = 22),
+        axis.title.x = element_text(size = 22),
+        axis.title.y = element_text(size = 22),
+        axis.text.y = element_text(size = 22),
+        axis.title = element_text(face = "bold"),
+        axis.line = element_line(linewidth=1.3),
+        axis.ticks = element_line(linewidth = 1.3),
+        axis.ticks.length = unit(.3,"cm")) +
+  theme(legend.text = element_text(size = 18))+
+  theme(legend.title = element_blank())
+
+# To plot the mean shape of Pumpkinseeds and Rockbass for example.
+# you first need to isolate the ct_df entries that are just "PKS" and 
+# "RKB"
+pksids <- which(ct_df$species == "PKS")
+rkbids <- which(ct_df$species == "RKB")
+
+# Then get their coordinates
+sub_pks <- ct_df$coords[,,pksids]
+sub_rkb <- ct_df$coords[,,rkbids]
+
+# Then we can use the mshape cmd in geomorph to see the mean shape of the 
+# groups.
+mean_shape_pks <- mshape(sub_pks)
+mean_shape_rkb <- mshape(sub_rkb)
+
+# With plotRefToTarget shows us the deformations.
+# First for PKS
+plotRefToTarget(ct_ref,mean_shape_pks, method = "points", mag = 2, links = outshape,
+                gridPars = gridPar(tar.pt.bg = "darkorange", tar.pt.size = 2,
+                                   tar.link.col = "darkorange", tar.link.lwd = 2))
+
+title(main = paste("Deformation of average Pumpkinseed sunfish"), cex.main = 2)
+
+# Then for RKB
+plotRefToTarget(ct_ref,mean_shape_rkb, method = "points", mag = 2, links = outshape,
+                gridPars = gridPar(tar.pt.bg = "darkgreen", tar.pt.size = 2,
+                                   tar.link.col = "darkgreen", tar.link.lwd = 2))
+
+title(main = paste("Deformation of average Rockbass"), cex.main = 2)
+
+#### END
+
+# The script written here runs through some basic analyses. You can use it and 
+# variations on it to run numerous other analyses such as testing PC1 scores vs 
+# other data (gear, temperature, pH, etc,...)
+
+# Remember that in some cases (especially when dealing with a single species)
+# you may need to size correct the data using the procD.lm cmd and use the 
+# residuals from the relationship to run your assessments without size 
+# influence. You can also use the same function to test whether there 
+# are relationships with other variables. 
+
+# Once you have the PCs however, you can then extract these to run regular lm
+# on the data.
+
+## NOTE: id you are interested in morphological disparity 
+# morphol.disparity {geomorph} in the help topics tab or type 
+#?morphol.disparity in the console.
+# Here is an example of the code and how it works on the centrarchid data.
+morphol.disparity(ct_GPA$coords ~ 1, groups = ct_df$species, iter = 1000)
