@@ -41,11 +41,11 @@ rm(list = ls())
 setwd("path/to/your/data")
 
 # Load the TPS file produced during landmarking
-rawdat <- readland.tps("FISH2024L.TPS", specID = "ID", readcurves = F, 
+rawdat <- readland.tps("YOURTPSFILE.TPS", specID = "ID", readcurves = F, 
                        negNA = FALSE, warnmsg = T)
 
 # Import the covariate file, containing METADATA 
-covar <- read.csv("F2024-METADATA.csv", header = T, na.strings = "NA", 
+covar <- read.csv("YOURCSVFILE.csv", header = T, na.strings = "NA", 
                   stringsAsFactors = T)
 
 # Extract names of the fish we landmarked and store in a vector
