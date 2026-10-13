@@ -1,0 +1,82 @@
+fishnum,sampldate,species,latname,Wt_ing,Len_inmm,gear,site
+CPA001,20190923,Logperch,Percina caprodes,11.8,106,bs,a
+CPA002 ,20190923,Perch,Perca flavescens,19,121,bs,a
+CPA003,20190923,Perch,Perca flavescens,16.5,118,bs,a
+CPA004,20190923,Logperch ,Percina caprodes,8.9,103,bs,a
+CPA005,20190923,Perch,Perca flavescens,3.9,72,bs,a
+CPA006,20190923,Perch,Perca flavescens,97.6,205,bs,a
+CPA007,20190923,Perch,Perca flavescens,19.4,123,bs,a
+CPA008,20190923,Brook Silverside,Labidesthes sicculus,1.9,71,bs,a
+CPA009,20190923,American eel,Anguilla rostrata,5896.7,800.1,bs,a
+CPA010,20190923,Perch,Perca flavescens,19.1,120,bs,a
+CPA011,20190923,Perch,Perca flavescens,85.3,195,bs,a
+CPA012,20190923,Perch,Perca flavescens,115.5,213,bs,a
+CPA013,20190923,Perch,Perca flavescens,18.8,120,bs,a
+CPA015,20190923,Golden Shiner,Notemigonus crysoleucas,8.6,100,bs,a
+CPA014,20190923,Perch,Perca flavescens,18.8,121,bs,a
+CPA016,20190923,Perch,Perca flavescens,12,10.7,bs,a
+CPA017,20190923,Perch,Perca flavescens,0.5,32,bs,a
+CPA018,20190923,Perch,Perca flavescens,3.7,70,bs,a
+CPA019,20190923,Brook Silverside,Labidesthes sicculus,1.1,61,bs,a
+CPA020,20190923,Brook Silverside,Labidesthes sicculus,1.5,68,bs,a
+CPA021,20190923,Bluegill,Lepomis macrochirus,1.8,45,bs,a
+CPA022,20190923,Spottail shiner,Notropis hudsonius,1,51,bs,a
+CPA023,20190923,Spottail shiner,Notropis hudsonius,1.8,61,bs,a
+CPA024,20190923,Perch,Perca flavescens,14.1,110,bs,a
+CPA025,20190923,Perch,Perca flavescens,16.1,113,bs,a
+CPA026,20190923,Small mouth bass,Micropterus dolomieu,5.1,71,bs,a
+CPA027,20190923,Perch,Perca flavescens,15.7,115,bs,a
+CPA028,20190923,Rock bass,Ambloplites rupestris,1.4,44,mt,b1
+CPA029,20190923,Perch,Perca flavescens,4.7,76,bs,a
+CPA030,20190923,Perch,Perca flavescens,5.6,81,bs,a
+CPA031,20190923,Perch,Perca flavescens,3.7,76,bs,a
+CPA032,20190923,Bluegill,Lepomis macrochirus,0.5,34,mt,a
+CPA033,20190923,Bluegill,Lepomis macrochirus,0.5,32,mt,a
+CPA034,20190923,Bluegill,Lepomis macrochirus,1.3,42,mt,a
+CPA035,20190923,Bluegill,Lepomis macrochirus,1.4,45,bs,a
+CPA036,20190923,Small mouth bass,Micropterus dolomieu,53.1,142,bs,a
+CPA037,20190923,Spottail shiner,Notropis hudsonius,1.8,62,mt,b2
+CPA038,20190923,Brook Silverside,Labidesthes sicculus,1,66,bs,a
+CPA039,20190923,Perch,Perca flavescens,299,244,bs,a
+CPA040,20190923,Spottail shiner,Notropis hudsonius,1.2,54,mt,b2
+CPA041,20190923,Small mouth bass,Micropterus dolomieu,5.1,62,bs,a
+CPA042,20190923,Logperch,Percina caprodes,14.2,114,bs,a
+LSL001,20190930,Rock bass,Ambloplites rupestris,1.2,37,fn,LSL-A
+LSL002,20190930,Bluegill,Lepomis macrochirus,1.1,43,fn,LSL-A
+LSL003,20190930,Bluegill,Lepomis macrochirus,0.5,40,fn,LSL-A
+LSL004,20190930,Bluegill,Lepomis macrochirus,1.1,47,fn,LSL-A
+LSL005,20190930,Rock bass,Ambloplites rupestris,299,200,fn,LSL-A
+LSL006,20190930,Rock bass,Ambloplites rupestris,1.3,45,fn,LSL-A
+LSL007,20190930,Bluegill,Lepomis macrochirus,1,44,fn,LSL-A
+LSL008,20190930,Rock bass,Ambloplites rupestris,299,185,fn,LSL-A
+LSL009,20190930,Bluegill,Lepomis macrochirus,4.8,78,fn,LSL-A
+LSL010,20190930,Bluegill,Lepomis macrochirus,1.2,43,fn,LSL-A
+LSL011,20190930,Bluegill,Lepomis macrochirus,2,50,fn,LSL-A
+LSL012,20190930,Bluegill,Lepomis macrochirus,1.6,47,fn,LSL-A
+LSL013,20190930,Bluegill,Lepomis macrochirus,2.1,50,fn,LSL-A
+LSL014,20190930,Small mouth bass,Micropterus dolomieu,3.8,70,fn,LSL-A
+LSL015,20190930,Rock bass,Ambloplites rupestris,299,195,fn,LSL-A
+LSL016,20190930,Rock bass,Ambloplites rupestris,65.6,147,fn,LSL-A
+LSL017,20190930,Perch,Perca flavescens,4.4,83,fn,LSL-A
+LSL018,20190930,Pumpkinseed,Lepomis gibbosus,47.3,125,fn,LSL-A
+LSL019,20190930,Pumpkinseed,Lepomis gibbosus,42.2,130,fn,LSL-A
+LSL020,20190930,Perch,Perca flavescens,20.5,125,fn,LSL-A
+LSL021,20190930,Perch,Perca flavescens,21.8,133,fn,LSL-A
+LSL022,20190930,Perch,Perca flavescens,46.7,168,fn,LSL-A
+LSL023,20190930,Perch,Perca flavescens,17.8,120,fn,LSL-A
+LSL024,20190930,Perch,Perca flavescens,44.5,132,fn,LSL-A
+LSL025,20190930,Perch,Perca flavescens,19.6,118,fn,LSL-A
+LSL026,20190930,Perch,Perca flavescens,23.5,134,fn,LSL-A
+LSL027,20190930,Perch,Perca flavescens,17.9,111,fn,LSL-A
+LSL028,20190930,Perch,Perca flavescens,20.9,120,fn,LSL-A
+LSL029,20190930,Perch,Perca flavescens,17.4,118,fn,LSL-A
+LSL030,20190930,Perch,Perca flavescens,13.8,108,fn,LSL-A
+LSL031,20190930,Spottail shiner,Notropis hudsonius,1.2,55,Han,LSL-E
+LSL032,20190930,Tessallated darter,Etheostoma olmstedi,1.8,45,Han,LSL-E
+LSL033,20190930,Tessallated darter,Etheostoma olmstedi,1.8,35,Han,LSL-E
+LSL034,20190930,Banded killifish,Fundulus diaphanus,1.5,50,Han,LSL-E
+LSL035,20190930,Fantail darter,Etheostoma flabellare,1.4,45,Han,LSL-E
+LSL036,20190930,Rock bass,Ambloplites rupestris,2.3,45,Han,LSL-E
+LSL037,20190930,Tessallated darter,Etheostoma olmstedi,1.7,32,Han,LSL-E
+LSL038,20190930,Spottail shiner,Notropis hudsonius,1.6,42,Han,LSL-E
+LSL039,20190930,Rock bass,Ambloplites rupestris,2.4,50,Han,LSL-E
